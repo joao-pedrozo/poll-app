@@ -21,8 +21,6 @@ const io = new Server(server, {
 });
 
 app.post("/poll", async (req, res) => {
-  console.log(req.body);
-
   const options = Object.keys(req.body)
     .filter((key) => key.startsWith("option-"))
     .map((key) => {
@@ -31,6 +29,14 @@ app.post("/poll", async (req, res) => {
         name: req.body[key],
       };
     });
+
+  if (!req.body.pollTitle)
+    return res.status(400).send({ error: "You need to provide a poll title" });
+
+  if (options.length < 2)
+    return res
+      .status(400)
+      .send({ error: "You need to provide at least 2 options" });
 
   const poll = await prisma.poll.create({
     data: {
