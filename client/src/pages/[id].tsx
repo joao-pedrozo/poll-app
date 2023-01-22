@@ -19,6 +19,22 @@ interface Poll {
   options: Option[];
 }
 
+export const getOptionVotePercentage = (poll: Poll, optionId: string) => {
+  const totalVotes = poll.options.reduce((acc, option) => {
+    return acc + option.votes;
+  }, 0);
+
+  const optionVotes = poll.options.find(
+    (option) => option.id === optionId
+  ).votes;
+
+  if (optionVotes) {
+    return parseInt(((optionVotes / totalVotes) * 100).toFixed(0));
+  }
+
+  return 0;
+};
+
 const PollPage: NextPage = () => {
   const [poll, setPoll] = useState<Poll>(null);
   const [notFound, setNotFound] = useState(false);
@@ -29,6 +45,7 @@ const PollPage: NextPage = () => {
       socket.emit("join_room", router.query.id);
       socket.once("join_room", (data) => {
         setPoll(data.poll);
+        console.log(555);
 
         if (!data.poll) {
           setNotFound(true);
@@ -69,22 +86,6 @@ const PollPage: NextPage = () => {
       "votedPolls",
       JSON.stringify(votedPolls.concat(router.query.id as string))
     );
-  };
-
-  const getOptionVotePercentage = (optionId: string) => {
-    const totalVotes = poll.options.reduce((acc, option) => {
-      return acc + option.votes;
-    }, 0);
-
-    const optionVotes = poll.options.find(
-      (option) => option.id === optionId
-    ).votes;
-
-    if (optionVotes) {
-      return parseInt(((optionVotes / totalVotes) * 100).toFixed(0));
-    }
-
-    return 0;
   };
 
   const hasCreatedPoll = () => {
@@ -137,10 +138,13 @@ const PollPage: NextPage = () => {
                 <li key={option.id} className="w-full max-w-md">
                   <div className="flex justify-between">
                     <span>{option.name}</span>
-                    <span>{`${getOptionVotePercentage(option.id)}%`}</span>
+                    <span>{`${getOptionVotePercentage(
+                      poll,
+                      option.id
+                    )}%`}</span>
                   </div>
                   <ProgressBar
-                    percentage={getOptionVotePercentage(option.id)}
+                    percentage={getOptionVotePercentage(poll, option.id)}
                   />
                 </li>
               ))}
